@@ -40,8 +40,12 @@ jobs:
               docker stop containers
               docker rm containers
             fi
-            # Pull and run the new container
+            # Pull and run the new container with a password
             docker pull quisyo/postgres:latest
-            docker run -d --name containers quisyo/postgres:latest
+            docker run -d --name containers \
+              -e POSTGRES_PASSWORD=mysecretpassword \
+              -e POSTGRES_DB=mydatabase \
+              -p 5432:5432 \
+              quisyo/postgres:latest
           EOF
           rm id_ed25519  # Clean up the SSH key file
