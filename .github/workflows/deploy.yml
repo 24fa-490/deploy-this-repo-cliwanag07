@@ -1,0 +1,51 @@
+name: Deploy Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Change to master if that's your default branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}  # Your Docker Hub username
+          password: ${{ secrets.DOCKER_TOKEN }}  # Your Docker Hub personal access token
+
+      - name: Build Docker image
+        run: |
+          docker build -t quisyo/postgres:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push quisyo/postgres:latest
+
+      - name: Deploy to Local Docker Host
+        env:
+          HOST: quis@10.67.195.173  # Replace with your user and local machine IP
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "${PRIVATE_KEY}" > id_ed25519
+          chmod 600 id_ed25519
+          ssh -i id_ed25519 -o StrictHostKeyChecking=no $HOST << 'EOF'
+            # Stop and remove the old container if it exists
+            if [ $(docker ps -q -f name=containers) ]; then
+              docker stop containers
+              docker rm containers
+            fi
+            # Pull and run the new container with a password
+            docker pull quisyo/postgres:latest
+            docker run -d --name containers \
+              -e POSTGRES_PASSWORD=mysecretpassword \
+              -e POSTGRES_DB=mydatabase \
+              -p 5432:5432 \
+              quisyo/postgres:latest
+          EOF
+          rm id_ed25519  # Clean up the SSH key file
