@@ -35,8 +35,13 @@ jobs:
           echo "${PRIVATE_KEY}" > id_ed25519
           chmod 600 id_ed25519
           ssh -i id_ed25519 -o StrictHostKeyChecking=no $HOST << 'EOF'
+            # Stop and remove the old container if it exists
+            if [ $(docker ps -q -f name=containers) ]; then
+              docker stop containers
+              docker rm containers
+            fi
+            # Pull and run the new container
             docker pull quisyo/postgres:latest
-            docker stop containers || true  # Stop the old container if it exists
-            docker rm containers || true    # Remove the old container if it exists
             docker run -d --name containers quisyo/postgres:latest
           EOF
+          rm id_ed25519  # Clean up the SSH key file
