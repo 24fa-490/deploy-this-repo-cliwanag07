@@ -32,19 +32,6 @@ jobs:
           HOST: quis@10.67.195.173  # Replace with your user and local machine IP
           PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          echo "${PRIVATE_KEY}" > id_rsa
-          chmod 600 id_rsa
-          ssh -i id_rsa -o StrictHostKeyChecking=no $HOST << 'EOF'
-            docker pull your_dockerhub_username/your_image_name:latest
-            docker stop your_container_name || true  # Stop the old container if it exists
-            docker rm your_container_name || true    # Remove the old container if it exists
-            docker run -d --name your_container_name your_dockerhub_username/your_image_name:latest
-          EOF
-      - name: Deploy to Local Docker Host
-        env:
-          HOST: quis@10.67.195.173  # Replace with your user and local machine IP
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
           echo "${PRIVATE_KEY}" > id_ed25519
           chmod 600 id_ed25519
           ssh -i id_ed25519 -o StrictHostKeyChecking=no $HOST << 'EOF'
